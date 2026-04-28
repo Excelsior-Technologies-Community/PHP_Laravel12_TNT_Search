@@ -836,6 +836,9 @@ PHP_Laravel12_TNT_Search/
 ---
 
 Your PHP_Laravel12_TNT_Search Project is now ready!
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> development
