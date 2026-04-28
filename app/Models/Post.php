@@ -4,23 +4,33 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Scout\Searchable;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Post extends Model
 {
-    use Searchable;
+    use Searchable, SoftDeletes;
 
     protected $fillable = [
         'title',
         'body',
+        'slug',
+        'status'
     ];
 
-    /**
-     * Data that will be indexed by TNTSearch
-     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($post) {
+            $post->slug = Str::slug($post->title);
+        });
+    }
+
     public function toSearchableArray()
     {
         return [
-            'id' => $this->id,      // VERY IMPORTANT
+            'id' => $this->id,
             'title' => $this->title,
             'body' => $this->body,
         ];
