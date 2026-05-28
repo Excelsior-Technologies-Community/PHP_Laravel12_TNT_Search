@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    // LIST + SEARCH + FILTER
     public function index(Request $request)
     {
         $search = $request->search;
@@ -18,7 +17,6 @@ class PostController extends Controller
             $posts = Post::latest()->get();
         }
 
-        // Status filter
         if ($request->status !== null && $request->status !== '') {
             $posts = $posts->where('status', $request->status);
         }
@@ -26,14 +24,11 @@ class PostController extends Controller
         return view('posts.index', compact('posts'));
     }
 
-    //CREATE
     public function create()
     {
         return view('posts.create');
     }
 
-
-    // STORE
     public function store(Request $request)
     {
         $request->validate([
@@ -44,54 +39,70 @@ class PostController extends Controller
         Post::create($request->all());
 
         return redirect('/')->with('success', 'Post created successfully!');
-
     }
 
-    // SHOW BY SLUG
     public function show($slug)
     {
         $post = Post::where('slug', $slug)->firstOrFail();
         return view('posts.show', compact('post'));
     }
 
-    // TOGGLE STATUS (AJAX)
     public function toggleStatus(Request $request)
-{
-    $post = Post::findOrFail($request->id);
-    $post->status = !$post->status;
-    $post->save();
+    {
+        $post = Post::findOrFail($request->id);
+        $post->status = !$post->status;
+        $post->save();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Status updated successfully!'
-    ]);
-}
+        return response()->json([
+            'success' => true,
+            'message' => 'Status updated successfully!'
+        ]);
+    }
 
-    // DELETE (SOFT)
     public function destroy($id)
     {
         Post::findOrFail($id)->delete();
         return back()->with('success', 'Post moved to trash!');
     }
 
-    // TRASH
     public function trash()
     {
         $posts = Post::onlyTrashed()->get();
         return view('posts.trash', compact('posts'));
     }
 
-    // RESTORE
     public function restore($id)
     {
         Post::onlyTrashed()->findOrFail($id)->restore();
         return back()->with('success', 'Post restored successfully!');
     }
 
-    // FORCE DELETE
     public function forceDelete($id)
     {
         Post::onlyTrashed()->findOrFail($id)->forceDelete();
         return back()->with('success', 'Post deleted permanently!');
+    }
+
+    public function suggestions(Request $request)
+    {
+        $query = $request->input('q');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        $posts = Post::search($query)->get()->take(5);
+
+        $formattedPosts = $posts->map(function ($post) use ($query) {
+            $highlightedTitle = preg_replace('/(' . preg_quote($query, '/') . ')/i', '<mark class="bg-yellow-300 text-dark px-1 rounded">$1</mark>', $post->title);
+
+            return [
+                'id' => $post->id,
+                'title' => $highlightedTitle,
+                'url' => '/post/' . $post->slug
+            ];
+        });
+
+        return response()->json($formattedPosts);
     }
 }
