@@ -7,6 +7,8 @@ Route::get('/', [PostController::class, 'index']);
 Route::get('/create', [PostController::class, 'create']); 
 Route::post('/posts', [PostController::class, 'store']);
 
+Route::get('/posts/search/suggestions', [PostController::class, 'suggestions'])->name('posts.suggestions');
+
 Route::get('/post/{slug}', [PostController::class, 'show']);
 
 Route::post('/status', [PostController::class, 'toggleStatus']);
